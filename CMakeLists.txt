@@ -82,6 +82,7 @@ register_model(std-indices STD_INDICES STDIndicesStream.cpp)
 register_model(std-ranges STD_RANGES STDRangesStream.cpp)
 register_model(hip HIP HIPStream.cpp)
 register_model(cuda CUDA CUDAStream.cu)
+register_model(CUPLA CUPLA CUPLAStream.cpp)
 register_model(kokkos KOKKOS KokkosStream.cpp)
 register_model(sycl SYCL SYCLStream.cpp)
 register_model(sycl2020 SYCL2020 SYCLStream2020.cpp)
@@ -147,8 +148,16 @@ message(STATUS "Executable  : ${EXE_NAME}")
 
 # below we have all the usual CMake target setup steps
 
-include_directories(src)
-add_executable(${EXE_NAME} ${IMPL_SOURCES} src/main.cpp)
+
+if (${MODEL} EQUAL "CUPLA")
+	#Point to directory that contains cuda_to_cupla.h in your CUPLA build to avoid compilation errors
+	target_include_directories(${EXE_NAME} PRIVATE ${CUPLA_ROOT}/include)
+	cupla_add_executable(${EXE_NAME} ${IMPL_SOURCES} main.cpp)
+else ()
+	include_directories(src)
+	add_executable(${EXE_NAME} ${IMPL_SOURCES} main.cpp)
+endif ()
+
 target_link_libraries(${EXE_NAME} PUBLIC ${LINK_LIBRARIES})
 target_compile_definitions(${EXE_NAME} PUBLIC ${IMPL_DEFINITIONS})
 
