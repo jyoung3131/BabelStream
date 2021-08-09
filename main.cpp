@@ -43,6 +43,8 @@
 #include "SYCLStream.h"
 #elif defined(OMP)
 #include "OMPStream.h"
+#elif defined(CUPLA)
+#include "CUPLAStream.h"
 #endif
 
 // Default size of 2^25
