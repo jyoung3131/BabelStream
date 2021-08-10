@@ -18,15 +18,20 @@ macro(setup)
     #Find CUPLA specified from the environment variable
     set(cupla_ROOT "$ENV{CUPLA_ROOT}" CACHE STRING  "The location of the cupla library")
 
-    list(APPEND CMAKE_MODULE_PATH "${CUPLA_ROOT}")
-    list(APPEND CMAKE_MODULE_PATH "${CUPLA_ROOT}/cmake")
+    list(APPEND CMAKE_MODULE_PATH "${cupla_ROOT}")
+    list(APPEND CMAKE_MODULE_PATH "${cupla_ROOT}/cmake")
     list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_LIST_DIR}/cmake/Modules")
     find_package(cupla REQUIRED)
 
     #enable_language(CUPLA)
 
     #Point to directory that contains cuda_to_cupla.h in your CUPLA build to avoid compilation errors
-    #target_include_directories(${EXE_NAME} PRIVATE ${CUPLA_ROOT}/include)
+    set(CUPLA_INCLUDE_DIR ${cupla_ROOT}/include)
+    #Also add the Alpaka and Boost includes - note that Boost 1.65 or greater is required
+    set(ALPAKA_INCLUDE_DIR ${cupla_ROOT}/alpaka/include)
+    set(BOOST_INCLUDE_DIR "$ENV{BOOST_ROOT}/include")
+    include_directories(${CUPLA_INCLUDE_DIR} ${ALPAKA_INCLUDE_DIR} ${BOOST_INCLUDE_DIR})
+    #set(CUPLA_HEADERS ${CUPLA_ROOT}/*)
 
     # add -forward-unknown-to-host-compiler for compatibility reasons
     set(CMAKE_CUPLA_FLAGS ${CMAKE_CUPLA_FLAGS} "" ${CUPLA_EXTRA_FLAGS})
