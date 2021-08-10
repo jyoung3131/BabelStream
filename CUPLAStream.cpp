@@ -122,7 +122,7 @@ struct init_kernel
 template <class T>
 void CUDAStream<T>::init_arrays(T initA, T initB, T initC)
 {
-  init_kernel<<<array_size/TBSIZE, TBSIZE>>>(d_a, d_b, d_c, initA, initB, initC);
+  CUPLA_OPTI_KERNEL(init_kernel)(array_size/TBSIZE, TBSIZE)(d_a, d_b, d_c, initA, initB, initC);
   check_error();
   cudaDeviceSynchronize();
   check_error();
@@ -166,7 +166,6 @@ struct copy_kernel
 template <class T>
 void CUDAStream<T>::copy()
 {
-  //copy_kernel<<<array_size/TBSIZE, TBSIZE>>>(d_a, d_c);
   CUPLA_KERNEL_OPTI(copy_kernel)(array_size/TBSIZE, TBSIZE)(d_a, d_c);
   check_error();
   cudaDeviceSynchronize();
@@ -260,7 +259,6 @@ void CUDAStream<T>::nstream()
   check_error();
 }
 
-//__global__ void dot_kernel(const T * a, const T * b, T * sum, int array_size)
 template <class T>
 struct dot_kernel
 {
@@ -268,7 +266,7 @@ struct dot_kernel
 	ALPAKA_FN_ACC
 	void operator()(T_Acc const & acc, const T * a, const T * b, T * sum, int array_size)
 	{
-	  __shared__ T tb_sum[TBSIZE];
+	 sharedMem(tb_sum,cupla::Array<T, TBSIZE>);
 	
 	  int i = blockDim.x * blockIdx.x + threadIdx.x;
 	  const size_t local_i = threadIdx.x;
@@ -294,7 +292,7 @@ struct dot_kernel
 template <class T>
 T CUDAStream<T>::dot()
 {
-  dot_kernel<<<DOT_NUM_BLOCKS, TBSIZE>>>(d_a, d_b, d_sum, array_size);
+  CUPLA_OPTI_KERNEL(dot_kernel<T>())(DOT_NUM_BLOCKS, TBSIZE)(d_a, d_b, d_sum, array_size);
   check_error();
 
 #if defined(MANAGED) || defined(PAGEFAULT)
@@ -358,9 +356,11 @@ std::string getDeviceDriver(const int device)
   cudaSetDevice(device);
   check_error();
   int driver;
-  cudaDriverGetVersion(&driver);
+  //TODO - update with Alpaka version
+  //cudaDriverGetVersion(&driver);
   check_error();
-  return std::to_string(driver);
+  return std::string("Not supported");
+  //std::to_string(driver);
 }
 
 template class CUDAStream<float>;
