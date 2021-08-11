@@ -262,9 +262,9 @@ void CUDAStream<T>::nstream()
 template <class T>
 struct dot_kernel
 {
-	template< typename T_Acc >
+	template< typename T_Acc, class T>
 	ALPAKA_FN_ACC
-	void operator()(T_Acc const & acc, const T * a, const T * b, T * sum, int array_size)
+	void operator()(T_Acc const & acc, const T * a, const T * b, T * sum, const int array_size)
 	{
 	 sharedMem(tb_sum,cupla::Array<T, TBSIZE>);
 	
@@ -292,7 +292,7 @@ struct dot_kernel
 template <class T>
 T CUDAStream<T>::dot()
 {
-  CUPLA_OPTI_KERNEL(dot_kernel<T>())(DOT_NUM_BLOCKS, TBSIZE)(d_a, d_b, d_sum, array_size);
+  CUPLA_OPTI_KERNEL(dot_kernel<T>)(DOT_NUM_BLOCKS, TBSIZE)(d_a, d_b, d_sum, array_size);
   check_error();
 
 #if defined(MANAGED) || defined(PAGEFAULT)
