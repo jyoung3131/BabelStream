@@ -148,10 +148,9 @@ message(STATUS "Executable  : ${EXE_NAME}")
 
 # below we have all the usual CMake target setup steps
 
-
-if (${MODEL} EQUAL "CUPLA")
-	#Point to directory that contains cuda_to_cupla.h in your CUPLA build to avoid compilation errors
-	target_include_directories(${EXE_NAME} PRIVATE ${CUPLA_ROOT}/include)
+#CUPLA uses a special macro to pull in the correct compiler and compilation macros
+if ("${MODEL}" STREQUAL "CUPLA")
+	message(STATUS "using cupla_add_executable")
 	cupla_add_executable(${EXE_NAME} ${IMPL_SOURCES} main.cpp)
 else ()
 	include_directories(src)
