@@ -19,7 +19,7 @@ void check_error(void)
 }
 
 template <class T>
-CUDAStream<T>::CUDAStream(const int ARRAY_SIZE, const int device_index)
+CUPLAStream<T>::CUPLAStream(const int ARRAY_SIZE, const int device_index)
 {
 
   // The array size must be divisible by TBSIZE for kernel launches
@@ -84,7 +84,7 @@ CUDAStream<T>::CUDAStream(const int ARRAY_SIZE, const int device_index)
 
 
 template <class T>
-CUDAStream<T>::~CUDAStream()
+CUPLAStream<T>::~CUPLAStream()
 {
   free(sums);
 
@@ -121,7 +121,7 @@ struct init_kernel
 };
 
 template <class T>
-void CUDAStream<T>::init_arrays(T initA, T initB, T initC)
+void CUPLAStream<T>::init_arrays(T initA, T initB, T initC)
 {
   CUPLA_KERNEL_OPTI(init_kernel<T>)(array_size/TBSIZE, TBSIZE)(d_a, d_b, d_c, initA, initB, initC);
   check_error();
@@ -130,7 +130,7 @@ void CUDAStream<T>::init_arrays(T initA, T initB, T initC)
 }
 
 template <class T>
-void CUDAStream<T>::read_arrays(std::vector<T>& a, std::vector<T>& b, std::vector<T>& c)
+void CUPLAStream<T>::read_arrays(std::vector<T>& a, std::vector<T>& b, std::vector<T>& c)
 {
   // Copy device memory to host
 #if defined(PAGEFAULT) || defined(MANAGED)
@@ -165,7 +165,7 @@ struct copy_kernel
 };
 
 template <class T>
-void CUDAStream<T>::copy()
+void CUPLAStream<T>::copy()
 {
   CUPLA_KERNEL_OPTI(copy_kernel<T>)(array_size/TBSIZE, TBSIZE)(d_a, d_c);
   check_error();
@@ -187,7 +187,7 @@ struct mul_kernel
 };
 
 template <class T>
-void CUDAStream<T>::mul()
+void CUPLAStream<T>::mul()
 {
   CUPLA_KERNEL_OPTI(mul_kernel<T>)(array_size/TBSIZE, TBSIZE)(d_b, d_c);
   check_error();
@@ -208,7 +208,7 @@ struct add_kernel
 };
 
 template <class T>
-void CUDAStream<T>::add()
+void CUPLAStream<T>::add()
 {
   CUPLA_KERNEL_OPTI(add_kernel<T>)(array_size/TBSIZE, TBSIZE)(d_a, d_b, d_c);
   check_error();
@@ -230,7 +230,7 @@ struct triad_kernel
 };
 
 template <class T>
-void CUDAStream<T>::triad()
+void CUPLAStream<T>::triad()
 {
   CUPLA_KERNEL_OPTI(triad_kernel<T>)(array_size/TBSIZE, TBSIZE)(d_a, d_b, d_c);
   check_error();
@@ -252,7 +252,7 @@ struct nstream_kernel
 };
 
 template <class T>
-void CUDAStream<T>::nstream()
+void CUPLAStream<T>::nstream()
 {
   CUPLA_KERNEL_OPTI(nstream_kernel<T>)(array_size/TBSIZE, TBSIZE)(d_a, d_b, d_c);
   check_error();
@@ -291,7 +291,7 @@ struct dot_kernel
 };
 
 template <class T>
-T CUDAStream<T>::dot()
+T CUPLAStream<T>::dot()
 {
   CUPLA_KERNEL_OPTI(dot_kernel<T>)(DOT_NUM_BLOCKS, TBSIZE)(d_a, d_b, d_sum, array_size);
   check_error();
@@ -364,5 +364,5 @@ std::string getDeviceDriver(const int device)
   //std::to_string(driver);
 }
 
-template class CUDAStream<float>;
-template class CUDAStream<double>;
+template class CUPLAStream<float>;
+template class CUPLAStream<double>;

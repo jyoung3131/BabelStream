@@ -22,7 +22,7 @@
 #define DOT_NUM_BLOCKS 256
 
 template <class T>
-class CUDAStream : public Stream<T>
+class CUPLAStream : public Stream<T>
 {
   protected:
     // Size of arrays
@@ -40,8 +40,8 @@ class CUDAStream : public Stream<T>
 
   public:
 
-    CUDAStream(const int, const int);
-    ~CUDAStream();
+    CUPLAStream(const int, const int);
+    ~CUPLAStream();
 
     virtual void copy() override;
     virtual void add() override;
