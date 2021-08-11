@@ -49,10 +49,11 @@ CUDAStream<T>::CUDAStream(const int ARRAY_SIZE, const int device_index)
   sums = (T*)malloc(sizeof(T) * DOT_NUM_BLOCKS);
 
   // Check buffers fit on the device
-  cudaDeviceProp props;
+  /*cudaDeviceProp props;
   cudaGetDeviceProperties(&props, 0);
   if (props.totalGlobalMem < 3*ARRAY_SIZE*sizeof(T))
     throw std::runtime_error("Device does not have enough memory for all 3 buffers");
+*/
 
   // Create device buffers
 #if defined(MANAGED)
@@ -105,12 +106,12 @@ CUDAStream<T>::~CUDAStream()
 }
 
 
-//template <typename T>
+template <typename T>
 struct init_kernel
 {
  	template< typename T_Acc >
     	ALPAKA_FN_ACC
-	void operator()(T_Acc const & acc, const T * a, const T * b, const T * c, const T initA, const T initB, const T initC)
+	void operator()(T_Acc const & acc, T * a, T * b, T * c, const T initA, const T initB, const T initC) const
 	{
 	  const int i = blockDim.x * blockIdx.x + threadIdx.x;
 	  a[i] = initA;
@@ -122,7 +123,7 @@ struct init_kernel
 template <class T>
 void CUDAStream<T>::init_arrays(T initA, T initB, T initC)
 {
-  CUPLA_OPTI_KERNEL(init_kernel)(array_size/TBSIZE, TBSIZE)(d_a, d_b, d_c, initA, initB, initC);
+  CUPLA_KERNEL_OPTI(init_kernel<T>)(array_size/TBSIZE, TBSIZE)(d_a, d_b, d_c, initA, initB, initC);
   check_error();
   cudaDeviceSynchronize();
   check_error();
@@ -156,7 +157,7 @@ struct copy_kernel
 {
     	template< typename T_Acc >
 	ALPAKA_FN_ACC
-	void operator()(T_Acc const & acc, const T * a, T * c)
+	void operator()(T_Acc const & acc, const T * a, T * c) const
 	{
 	  const int i = blockDim.x * blockIdx.x + threadIdx.x;
 	  c[i] = a[i];
@@ -166,7 +167,7 @@ struct copy_kernel
 template <class T>
 void CUDAStream<T>::copy()
 {
-  CUPLA_KERNEL_OPTI(copy_kernel)(array_size/TBSIZE, TBSIZE)(d_a, d_c);
+  CUPLA_KERNEL_OPTI(copy_kernel<T>)(array_size/TBSIZE, TBSIZE)(d_a, d_c);
   check_error();
   cudaDeviceSynchronize();
   check_error();
@@ -177,7 +178,7 @@ struct mul_kernel
 {
 	template< typename T_Acc >
 	ALPAKA_FN_ACC
-	void operator()(T_Acc const & acc, const T * b, const T * c)
+	void operator()(T_Acc const & acc, T * b, const T * c) const
 	{
 	  const T scalar = startScalar;
 	  const int i = blockDim.x * blockIdx.x + threadIdx.x;
@@ -188,7 +189,7 @@ struct mul_kernel
 template <class T>
 void CUDAStream<T>::mul()
 {
-  CUPLA_KERNEL_OPTI(mul_kernel)(array_size/TBSIZE, TBSIZE)(d_b, d_c);
+  CUPLA_KERNEL_OPTI(mul_kernel<T>)(array_size/TBSIZE, TBSIZE)(d_b, d_c);
   check_error();
   cudaDeviceSynchronize();
   check_error();
@@ -199,7 +200,7 @@ struct add_kernel
 {
 	template< typename T_Acc >
 	ALPAKA_FN_ACC
-	void operator()(T_Acc const & acc, const T * a, const T * b, T * c)
+	void operator()(T_Acc const & acc, const T * a, const T * b, T * c) const
 	{
 	  const int i = blockDim.x * blockIdx.x + threadIdx.x;
 	  c[i] = a[i] + b[i];
@@ -209,7 +210,7 @@ struct add_kernel
 template <class T>
 void CUDAStream<T>::add()
 {
-  CUPLA_KERNEL_OPTI(add_kernel)(array_size/TBSIZE, TBSIZE)(d_a, d_b, d_c);
+  CUPLA_KERNEL_OPTI(add_kernel<T>)(array_size/TBSIZE, TBSIZE)(d_a, d_b, d_c);
   check_error();
   cudaDeviceSynchronize();
   check_error();
@@ -220,7 +221,7 @@ struct triad_kernel
 {
 	template< typename T_Acc >
 	ALPAKA_FN_ACC
-	void operator()(T_Acc const & acc, T * a, const T * b, const T * c)
+	void operator()(T_Acc const & acc, T * a, const T * b, const T * c) const
 	{
 	  const T scalar = startScalar;
 	  const int i = blockDim.x * blockIdx.x + threadIdx.x;
@@ -231,7 +232,7 @@ struct triad_kernel
 template <class T>
 void CUDAStream<T>::triad()
 {
-  CUPLA_KERNEL_OPTI(triad_kernel)(array_size/TBSIZE, TBSIZE)(d_a, d_b, d_c);
+  CUPLA_KERNEL_OPTI(triad_kernel<T>)(array_size/TBSIZE, TBSIZE)(d_a, d_b, d_c);
   check_error();
   cudaDeviceSynchronize();
   check_error();
@@ -242,7 +243,7 @@ struct nstream_kernel
 {
 	template< typename T_Acc >
 	ALPAKA_FN_ACC
-	void operator()(T_Acc const & acc, T * a, const T * b, const T * c)
+	void operator()(T_Acc const & acc, T * a, const T * b, const T * c) const
 	{
 	  const T scalar = startScalar;
 	  const int i = blockDim.x * blockIdx.x + threadIdx.x;
@@ -253,7 +254,7 @@ struct nstream_kernel
 template <class T>
 void CUDAStream<T>::nstream()
 {
-  CUPLA_KERNEL_OPTI(nstream_kernel)(array_size/TBSIZE, TBSIZE)(d_a, d_b, d_c);
+  CUPLA_KERNEL_OPTI(nstream_kernel<T>)(array_size/TBSIZE, TBSIZE)(d_a, d_b, d_c);
   check_error();
   cudaDeviceSynchronize();
   check_error();
@@ -262,9 +263,9 @@ void CUDAStream<T>::nstream()
 template <class T>
 struct dot_kernel
 {
-	template< typename T_Acc, class T>
+	template< typename T_Acc>
 	ALPAKA_FN_ACC
-	void operator()(T_Acc const & acc, const T * a, const T * b, T * sum, const int array_size)
+	void operator()(T_Acc const & acc, const T * a, const T * b, T * sum, const int array_size) const
 	{
 	 sharedMem(tb_sum,cupla::Array<T, TBSIZE>);
 	
@@ -292,7 +293,7 @@ struct dot_kernel
 template <class T>
 T CUDAStream<T>::dot()
 {
-  CUPLA_OPTI_KERNEL(dot_kernel<T>)(DOT_NUM_BLOCKS, TBSIZE)(d_a, d_b, d_sum, array_size);
+  CUPLA_KERNEL_OPTI(dot_kernel<T>)(DOT_NUM_BLOCKS, TBSIZE)(d_a, d_b, d_sum, array_size);
   check_error();
 
 #if defined(MANAGED) || defined(PAGEFAULT)
