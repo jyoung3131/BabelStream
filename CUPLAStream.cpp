@@ -55,15 +55,17 @@ CUPLAStream<T>::CUPLAStream(const int ARRAY_SIZE, const int device_index)
     throw std::runtime_error("Device does not have enough memory for all 3 buffers");
 */
 
+  //CUPLA NOTE: You need to cast pointers for cudaMalloc to void** because 
+  //  the underlying cuplaMalloc is C++ 
   // Create device buffers
 #if defined(MANAGED)
-  cudaMallocManaged(&d_a, ARRAY_SIZE*sizeof(T));
+  cudaMallocManaged((void**)&d_a, ARRAY_SIZE*sizeof(T));
   check_error();
-  cudaMallocManaged(&d_b, ARRAY_SIZE*sizeof(T));
+  cudaMallocManaged((void**)&d_b, ARRAY_SIZE*sizeof(T));
   check_error();
-  cudaMallocManaged(&d_c, ARRAY_SIZE*sizeof(T));
+  cudaMallocManaged((void**)&d_c, ARRAY_SIZE*sizeof(T));
   check_error();
-  cudaMallocManaged(&d_sum, DOT_NUM_BLOCKS*sizeof(T));
+  cudaMallocManaged((void**)&d_sum, DOT_NUM_BLOCKS*sizeof(T));
   check_error();
 #elif defined(PAGEFAULT)
   d_a = (T*)malloc(sizeof(T)*ARRAY_SIZE);
@@ -71,13 +73,13 @@ CUPLAStream<T>::CUPLAStream(const int ARRAY_SIZE, const int device_index)
   d_c = (T*)malloc(sizeof(T)*ARRAY_SIZE);
   d_sum = (T*)malloc(sizeof(T)*DOT_NUM_BLOCKS);
 #else
-  cudaMalloc(&d_a, ARRAY_SIZE*sizeof(T));
+  cudaMalloc((void**)&d_a, ARRAY_SIZE*sizeof(T));
   check_error();
-  cudaMalloc(&d_b, ARRAY_SIZE*sizeof(T));
+  cudaMalloc((void**)&d_b, ARRAY_SIZE*sizeof(T));
   check_error();
-  cudaMalloc(&d_c, ARRAY_SIZE*sizeof(T));
+  cudaMalloc((void**)&d_c, ARRAY_SIZE*sizeof(T));
   check_error();
-  cudaMalloc(&d_sum, DOT_NUM_BLOCKS*sizeof(T));
+  cudaMalloc((void**)&d_sum, DOT_NUM_BLOCKS*sizeof(T));
   check_error();
 #endif
 }
