@@ -1,0 +1,13 @@
+
+cupla provides several backends that can be run for BabelStream, and 
+each one requires that you compile differently with CMake. Here we document
+the most common settings.
+
+### OpenMP 2.0
+cmake -DMODEL=CUPLA -DALPAKA_ACC_CPU_B_SEQ_T_OMP2_ENABLE=ON ..
+
+### HIP for AMD MIxxx cards - tested with ROCm 4.2
+cmake -DMODEL=CUPLA -DALPAKA_ACC_GPU_HIP_ENABLE=ON -DALPAKA_HIP_ARCH=908 .. 
+
+## Caveats with using the CUPLA backend
+Note that some CUDA functions like cudaGetDeviceProperties are not directly supported with cupla.
