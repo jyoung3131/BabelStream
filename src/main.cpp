@@ -248,6 +248,10 @@ void run()
   // Use the CUDA implementation
   stream = new CUDAStream<T>(ARRAY_SIZE, deviceIndex);
 
+#elif defined(CUPLA)
+  // Use the CUPLA implementation
+  stream = new CUPLAStream<T>(ARRAY_SIZE, deviceIndex);
+
 #elif defined(HIP)
   // Use the HIP implementation
   stream = new HIPStream<T>(ARRAY_SIZE, deviceIndex);
