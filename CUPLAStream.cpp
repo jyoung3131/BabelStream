@@ -269,7 +269,8 @@ struct dot_kernel
 	ALPAKA_FN_ACC
 	void operator()(T_Acc const & acc, const T * a, const T * b, T * sum, const int array_size) const
 	{
-	 sharedMem(tb_sum,cupla::Array<T, TBSIZE>);
+	  //TODO - test if sharedMem bug is affecting performance here
+          sharedMem(tb_sum,cupla::Array<T, TBSIZE>);
 	
 	  int i = blockDim.x * blockIdx.x + threadIdx.x;
 	  const size_t local_i = threadIdx.x;
