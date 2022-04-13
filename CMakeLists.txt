@@ -3,7 +3,7 @@ cmake_minimum_required(VERSION 3.13 FATAL_ERROR)
 project(BabelStream VERSION 4.0 LANGUAGES CXX)
 
 # uncomment for debugging build issues:
-#set(CMAKE_VERBOSE_MAKEFILE ON)
+set(CMAKE_VERBOSE_MAKEFILE ON)
 
 # some nicer defaults for standard C++
 set(CMAKE_CXX_EXTENSIONS OFF)
@@ -82,7 +82,7 @@ register_model(std-indices STD_INDICES STDIndicesStream.cpp)
 register_model(std-ranges STD_RANGES STDRangesStream.cpp)
 register_model(hip HIP HIPStream.cpp)
 register_model(cuda CUDA CUDAStream.cu)
-register_model(CUPLA CUPLA CUPLAStream.cpp)
+register_model(cupla CUPLA CUPLAStream.cpp)
 register_model(kokkos KOKKOS KokkosStream.cpp)
 register_model(sycl SYCL SYCLStream.cpp)
 register_model(sycl2020 SYCL2020 SYCLStream2020.cpp)
@@ -147,13 +147,13 @@ message(STATUS "Defs        : ${IMPL_DEFINITIONS}")
 message(STATUS "Executable  : ${EXE_NAME}")
 
 # below we have all the usual CMake target setup steps
+include_directories(src)
 
 #CUPLA uses a special macro to pull in the correct compiler and compilation macros
-if ("${MODEL}" STREQUAL "CUPLA")
+if ("${MODEL}" STREQUAL "cupla")
 	message(STATUS "using cupla_add_executable")
-	cupla_add_executable(${EXE_NAME} ${IMPL_SOURCES} main.cpp)
+	cupla_add_executable(${EXE_NAME} ${IMPL_SOURCES} src/main.cpp)
 else ()
-	include_directories(src)
 	add_executable(${EXE_NAME} ${IMPL_SOURCES} main.cpp)
 endif ()
 
