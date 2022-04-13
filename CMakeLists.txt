@@ -1,52 +1,28 @@
 cmake_minimum_required(VERSION 3.13 FATAL_ERROR)
 
-project(BabelStream VERSION 3.5 LANGUAGES CXX)
+project(BabelStream VERSION 4.0 LANGUAGES CXX)
 
+# uncomment for debugging build issues:
 #set(CMAKE_VERBOSE_MAKEFILE ON)
 
 # some nicer defaults for standard C++
 set(CMAKE_CXX_EXTENSIONS OFF)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
+include(FetchContent)
 
+FetchContent_Declare(
+        opencl_header
+        URL https://github.com/KhronosGroup/OpenCL-Headers/archive/refs/tags/v2021.06.30.zip
+        URL_HASH MD5=af7ab7918a6a11c60370c8651a9f0192
+)
 
-#set(MODEL SYCL)
-#set(SYCL_COMPILER COMPUTECPP)
-#set(SYCL_COMPILER_DIR /home/tom/Desktop/computecpp_archive/ComputeCpp-CE-2.3.0-x86_64-linux-gnu)
-#set(MODEL RAJA)
-#set(RAJA_IN_TREE /home/tom/Downloads/RAJA-v0.13.0/)
-#set(ENABLE_CUDA ON)
-#set(TARGET NVIDIA)
-#set(CUDA_TOOLKIT_ROOT_DIR /opt/cuda-11.2)
-#set(CUDA_ARCH sm_70)
-#set(BLT_DIR /home/tom/Downloads/blt-0.3.6/)
-
-#set(MODEL STD)
-#set(ARCH  cc70)
-#set(CXX_EXTRA_FLAGS -v)
-
-#set(MODEL CUDA)
-#set(ARCH  sm_70)
-#set(CMAKE_CUDA_COMPILER /opt/cuda-11.2/bin/nvcc)
-
-#set(MODEL OCL)
-#set(OpenCL_LIBRARY /opt/rocm-4.0.0/opencl/lib/libOpenCL.so)
-#set(OpenCL_INCLUDE_DIR /opt/rocm-4.0.0/opencl/lib)
-#set(RELEASE_FLAGS -Ofast)
-#set(CXX_EXTRA_FLAGS -O2)
-
-#set(CMAKE_CXX_COMPILER /usr/lib/aomp/bin/clang++)
-#set(MODEL OMP)
-##set(OFFLOAD "AMD:gfx803")
-#set(OFFLOAD "NVIDIA:sm_35")
-#set(CXX_EXTRA_FLAGS --cuda-path=/opt/cuda-10.2/)
-
-#set(OFFLOAD "AMD:_70")
-#set(CXX_EXTRA_FLAGS --cuda-path=/opt/cuda-10.2/ --gcc-toolchain=/home/tom/spack/opt/spack/linux-fedora33-zen2/gcc-10.2.1/gcc-8.3.0-latmjo2hl2yv53255xkwko7k3y7bx2vv)
-#set(CXX_EXTRA_LINKER_FLAGS  )
-#set(MODEL HIP)
-
-#set(MODEL KOKKOS)
-#set(KOKKOS_IN_TREE /home/tom/Downloads/kokkos-3.3.00/)
+macro(setup_opencl_header_includes)
+    FetchContent_GetProperties(opencl_header)
+    if (NOT opencl_header_POPULATED)
+        FetchContent_Populate(opencl_header)
+        set(OpenCL_INCLUDE_DIR ${opencl_header_SOURCE_DIR})
+    endif ()
+endmacro()
 
 # the final executable name
 set(EXE_NAME babelstream)
@@ -92,28 +68,29 @@ hint_flag(CXX_EXTRA_LIBRARIES "
 hint_flag(CXX_EXTRA_LINKER_FLAGS "
         Append to linker flags (i.e GCC's `-Wl` or equivalent)")
 
-# copy CXX_EXTRA_FLAGS <- CXX_EXTRA_LINK_FLAGS
-if ((DEFINED CXX_EXTRA_FLAGS) AND (NOT DEFINED CXX_EXTRA_LINK_FLAGS))
-    set(CXX_EXTRA_LINK_FLAGS ${CXX_EXTRA_FLAGS})
-endif ()
+# Honor user's CXX_EXTRA_LINK_FLAGS
+set(CXX_EXTRA_LINK_FLAGS ${CXX_EXTRA_FLAGS} ${CXX_EXTRA_LINK_FLAGS})
 
 # include our macros
-include(register_models.cmake)
+include(cmake/register_models.cmake)
 
 # register out models <model_name> <preprocessor_def_name> <source files...>
-register_model(OMP OMP OMPStream.cpp)
-register_model(OCL OCL OCLStream.cpp)
-register_model(STD STD STDStream.cpp)
-register_model(STD20 STD20 STD20Stream.cpp)
-register_model(HIP HIP HIPStream.cpp)
-register_model(CUDA CUDA CUDAStream.cu)
+register_model(omp OMP OMPStream.cpp)
+register_model(ocl OCL OCLStream.cpp)
+register_model(std-data STD_DATA STDDataStream.cpp)
+register_model(std-indices STD_INDICES STDIndicesStream.cpp)
+register_model(std-ranges STD_RANGES STDRangesStream.cpp)
+register_model(hip HIP HIPStream.cpp)
+register_model(cuda CUDA CUDAStream.cu)
 register_model(CUPLA CUPLA CUPLAStream.cpp)
-register_model(KOKKOS KOKKOS KokkosStream.cpp)
-register_model(SYCL SYCL SYCLStream.cpp)
-register_model(ACC ACC ACCStream.cpp)
+register_model(kokkos KOKKOS KokkosStream.cpp)
+register_model(sycl SYCL SYCLStream.cpp)
+register_model(sycl2020 SYCL2020 SYCLStream2020.cpp)
+register_model(acc ACC ACCStream.cpp)
 # defining RAJA collides with the RAJA namespace so USE_RAJA
-register_model(RAJA USE_RAJA RAJAStream.cpp)
-register_model(TBB TBB TBBStream.cpp)
+register_model(raja USE_RAJA RAJAStream.cpp)
+register_model(tbb TBB TBBStream.cpp)
+register_model(thrust THRUST ThrustStream.cu) # Thrust uses cu, even for rocThrust
 
 
 set(USAGE ON CACHE BOOL "Whether to print all custom flags for the selected model")
@@ -149,7 +126,7 @@ message(STATUS "Default ${CMAKE_BUILD_TYPE} flags are `${DEFAULT_${BUILD_TYPE}_F
 # setup common build flag defaults if there are no overrides
 if (NOT DEFINED ${BUILD_TYPE}_FLAGS)
     set(ACTUAL_${BUILD_TYPE}_FLAGS ${DEFAULT_${BUILD_TYPE}_FLAGS})
-    elseif()
+elseif ()
     set(ACTUAL_${BUILD_TYPE}_FLAGS ${${BUILD_TYPE}_FLAGS})
 endif ()
 
@@ -176,6 +153,7 @@ if ("${MODEL}" STREQUAL "CUPLA")
 	message(STATUS "using cupla_add_executable")
 	cupla_add_executable(${EXE_NAME} ${IMPL_SOURCES} main.cpp)
 else ()
+	include_directories(src)
 	add_executable(${EXE_NAME} ${IMPL_SOURCES} main.cpp)
 endif ()
 
@@ -193,9 +171,9 @@ target_link_options(${EXE_NAME} PUBLIC LINKER:${CXX_EXTRA_LINKER_FLAGS})
 target_link_options(${EXE_NAME} PUBLIC ${LINK_FLAGS} ${CXX_EXTRA_LINK_FLAGS})
 
 # some models require the target to be already specified so they can finish their setup here
-# this only happens if the MODEL.cmake definition contains the `setup_target` macro
+# this only happens if the model.cmake definition contains the `setup_target` macro
 if (COMMAND setup_target)
     setup_target(${EXE_NAME})
 endif ()
 
-install (TARGETS ${EXE_NAME} DESTINATION bin)
+install(TARGETS ${EXE_NAME} DESTINATION bin)
