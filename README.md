@@ -1,6 +1,6 @@
 # BabelStream
 
-<img src="https://github.com/UoB-HPC/BabelStream/blob/gh-pages/img/BabelStreamlogo.png?raw=true" alt="logo" height="300" align="right" />
+<img src="babelstream.png?raw=true" alt="logo" height="300" align="right" />
 
 [![CI](https://github.com/UoB-HPC/BabelStream/actions/workflows/main.yaml/badge.svg?branch=main)](https://github.com/UoB-HPC/BabelStream/actions/workflows/main.yaml)
 
@@ -18,6 +18,7 @@ This code was previously called GPU-STREAM.
 - [How is this different to STREAM?](#how-is-this-different-to-stream)
 - [Building](#building)
     - [CMake](#cmake)
+    - [Spack](#spack)
     - [GNU Make (removed)](#gnu-make)
 - [Results](#results)
 - [Contributing](#contributing)
@@ -138,6 +139,35 @@ Alternatively, refer to the [CI script](./src/ci-test-compile.sh), which test-co
 
 *It is recommended that you delete the `build` directory when you change any of the build flags.*
 
+### Spack
+
+
+The project supports building with Spack >= 0.19.0, which can be installed without root via the [official GitHub repo](https://github.com/spack/spack).
+The BabelStream Spack Package source code could be accessed from the link [here](https://github.com/spack/spack/tree/develop/var/spack/repos/builtin/packages/babelstream/package.py).
+Each BabelStream implementation (programming model) is built as follows:
+
+```shell
+
+# Spack package installation starts with `spack install babelstream` for all programming models
+# The programming model wish to be build needs to be specified with `+` option
+# The model specific flags needs to be specified after defining model
+$ spack install babelstream@<version>%<compiler> +<model> <model specific flags>
+
+
+# The executables will be generated in:
+# SPACK_INSTALL_DIRECTORY/opt/spack/system-name/compiler-name/babelstream-version-identifier/bin/
+# this address will be printed at the end of generation which could be easily copied
+$ cd SPACK_INSTALL_DIRECTORY/opt/spack/system-name/compiler-name/babelstream-version-identifier/bin/
+$ ./<model>-stream
+```
+More detailed examples are provided in [Spack README file](./docs/spack_instructions.md).
+The `MODEL` variant selects one implementation of BabelStream to build.
+
+Currently available models are:
+```
+omp;ocl;std;std20;hip;cuda;kokkos;sycl;sycl2020;acc;raja;tbb;thrust
+```
+
 ### GNU Make
 
 Support for Make has been removed from 4.0 onwards.
@@ -163,11 +193,11 @@ Pull Requests should be made against the `develop` branch.
 
 Please cite BabelStream via this reference:
 
-Deakin T, Price J, Martineau M, McIntosh-Smith S. GPU-STREAM v2.0: Benchmarking the achievable memory bandwidth of many-core processors across diverse parallel programming models. 2016. Paper presented at P^3MA Workshop at ISC High Performance, Frankfurt, Germany. DOI: 10.1007/978- 3-319-46079-6_34
+Deakin T, Price J, Martineau M, McIntosh-Smith S. Evaluating attainable memory bandwidth of parallel programming models via BabelStream. International Journal of Computational Science and Engineering. Special issue. Vol. 17, No. 3, pp. 247–262. 2018. DOI: 10.1504/IJCSE.2018.095847
 
 ### Other BabelStream publications
 
-* Deakin T, Price J, Martineau M, McIntosh-Smith S. Evaluating attainable memory bandwidth of parallel programming models via BabelStream. International Journal of Computational Science and Engineering. Special issue. Vol. 17, No. 3, pp. 247–262. 2018.DOI: 10.1504/IJCSE.2018.095847
+* Deakin T, Price J, Martineau M, McIntosh-Smith S. GPU-STREAM v2.0: Benchmarking the achievable memory bandwidth of many-core processors across diverse parallel programming models. 2016. Paper presented at P^3MA Workshop at ISC High Performance, Frankfurt, Germany. DOI: 10.1007/978- 3-319-46079-6_34
 
 * Deakin T, McIntosh-Smith S. GPU-STREAM: Benchmarking the achievable memory bandwidth of Graphics Processing Units. 2015. Poster session presented at IEEE/ACM SuperComputing, Austin, United States.
   You can view the [Poster and Extended Abstract](http://sc15.supercomputing.org/sites/all/themes/SC15images/tech_poster/tech_poster_pages/post150.html).
